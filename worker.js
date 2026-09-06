@@ -2,10 +2,24 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    const isSpanish = host === "bahiajiquilisco.com";
+
+    // Serve host-specific search-engine discovery files.
+    if (url.pathname === "/sitemap.xml") {
+      const target = new URL(request.url);
+      target.pathname = isSpanish ? "/sitemap-es.xml" : "/sitemap-en.xml";
+      return env.ASSETS.fetch(new Request(target, request));
+    }
+
+    if (url.pathname === "/robots.txt") {
+      const target = new URL(request.url);
+      target.pathname = isSpanish ? "/robots-es.txt" : "/robots-en.txt";
+      return env.ASSETS.fetch(new Request(target, request));
+    }
 
     let assetRequest = request;
 
-    if (host === "bahiajiquilisco.com") {
+    if (isSpanish) {
       const spanish = new URL(request.url);
 
       if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html") {
