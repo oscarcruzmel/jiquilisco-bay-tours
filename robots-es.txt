@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.bahiajiquilisco.com/sitemap.xml
+Sitemap: https://bahiajiquilisco.com/sitemap.xml
