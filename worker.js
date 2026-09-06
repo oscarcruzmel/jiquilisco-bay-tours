@@ -12,18 +12,17 @@ export default {
         const record = String(body.record || "").slice(0, 30000);
         if (!record || !signer) return new Response(JSON.stringify({ok:false,error:"Missing waiver data"}), {status:400,headers:{"content-type":"application/json"}});
         if (!env.EMAIL) return new Response(JSON.stringify({ok:false,error:"Email delivery is not configured yet"}), {status:503,headers:{"content-type":"application/json"}});
-
-        await env.EMAIL.send({
-          to: "jiquiliscobaytours@gmail.com",
-          from: "waivers@jiquiliscobay.com",
-          subject: `Signed waiver ${ref} — ${signer}`,
-          text: `${record}\n\nCustomer email: ${email || "Not provided"}`,
-          replyTo: email || undefined
-        });
+        await env.EMAIL.send({to:"jiquiliscobaytours@gmail.com",from:"waivers@jiquiliscobay.com",subject:`Signed waiver ${ref} — ${signer}`,text:`${record}\n\nCustomer email: ${email || "Not provided"}`,replyTo:email || undefined});
         return new Response(JSON.stringify({ok:true}), {headers:{"content-type":"application/json","cache-control":"no-store"}});
       } catch (err) {
         return new Response(JSON.stringify({ok:false,error:"Unable to deliver waiver"}), {status:500,headers:{"content-type":"application/json","cache-control":"no-store"}});
       }
+    }
+
+    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
+    if (["/tours","/about","/contact"].includes(url.pathname.replace(/\/$/, ""))) {
+      const destination = host === "bahiajiquilisco.com" ? "https://bahiajiquilisco.com/" : "https://jiquiliscobay.com/";
+      return Response.redirect(destination, 301);
     }
 
     if (url.pathname === "/robots.txt") {
@@ -36,6 +35,7 @@ export default {
       const u = new URL(request.url); u.pathname = file;
       return env.ASSETS.fetch(new Request(u, request));
     }
+
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
@@ -61,13 +61,27 @@ export default {
       .replaceAll('data-price="25">30 minutos — $25/persona', 'data-price="35">30 minutos — $35/persona')
       .replaceAll('data-price="45">1 hora — $45/persona', 'data-price="50">1 hora — $50/persona')
       .replaceAll('data-price="60">Atardecer 75–90 min — $60/persona', 'data-price="65">Atardecer 75–90 min — $65/persona');
+
     const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html";
     if (isHome) {
       const es = host === "bahiajiquilisco.com";
+      if (es) {
+        html = html.replace(/<title>[^<]*<\/title>/i,'<title>Bahía de Jiquilisco, El Salvador | Tours, Qué Hacer y Guía de Viaje</title>');
+        html = html.replace(/<meta name="description" content="[^"]*">/i,'<meta name="description" content="Descubre la Bahía de Jiquilisco en Usulután, El Salvador: paseos en lancha, manglares, playas, ATV, cabalgatas, precios y consejos para planear tu visita.">');
+        html = html.replace(/<h1>[^<]*<\/h1>/i,'<h1>Bahía de Jiquilisco, El Salvador</h1>');
+        html = html.replace(/<p class="hero-copy">[^<]*<\/p>/i,'<p class="hero-copy">Descubre la Bahía de Jiquilisco en Usulután: paseos privados en lancha, manglares, islas, playas del Pacífico y experiencias en Punta San Juan del Gozo.</p>');
+      } else {
+        html = html.replace(/<title>[^<]*<\/title>/i,'<title>Jiquilisco Bay, El Salvador | Tours, Things to Do & Travel Guide</title>');
+        html = html.replace(/<meta name="description" content="[^"]*">/i,'<meta name="description" content="Discover Jiquilisco Bay in Usulután, El Salvador: boat tours, mangroves, islands, beaches, ATV rides, horseback riding, prices and trip-planning guides.">');
+        html = html.replace(/<h1>[^<]*<\/h1>/i,'<h1>Jiquilisco Bay, El Salvador</h1>');
+        html = html.replace(/<p class="hero-copy">[^<]*<\/p>/i,'<p class="hero-copy">Discover Jiquilisco Bay in Usulután with private boat tours, mangrove waterways, islands, remote Pacific beaches and experiences around Punta San Juan del Gozo.</p>');
+      }
+      // Normalize canonicals to the non-www production domains.
+      html = html.replace(/<link rel="canonical" href="[^"]*">/i, `<link rel="canonical" href="${es?'https://bahiajiquilisco.com/':'https://jiquiliscobay.com/'}">`);
       const seo = es
         ? '<link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">'
         : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
-      const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"TouristInformationCenter","name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
+      const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":["TouristInformationCenter","TravelAgency"],"name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Guía de viaje, paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Travel information, boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
       html = html.replace("</head>", seo + schema + "</head>");
       html = html.replace("</body>", '<script src="/waiver.js" defer></script></body>');
     }
