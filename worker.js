@@ -45,6 +45,7 @@ export default {
         : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
       const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":"TouristInformationCenter","name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
       html = html.replace("</head>", seo + schema + "</head>");
+      html = html.replace("</body>", '<script src="/waiver.js" defer></script></body>');
     }
     return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
   }
