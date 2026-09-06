@@ -2,6 +2,30 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
+
+    if (url.pathname === "/api/waiver" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const ref = String(body.ref || "JBT-WAIVER").slice(0, 80);
+        const signer = String(body.signer || "Guest").slice(0, 160);
+        const email = String(body.email || "").slice(0, 200);
+        const record = String(body.record || "").slice(0, 30000);
+        if (!record || !signer) return new Response(JSON.stringify({ok:false,error:"Missing waiver data"}), {status:400,headers:{"content-type":"application/json"}});
+        if (!env.EMAIL) return new Response(JSON.stringify({ok:false,error:"Email delivery is not configured yet"}), {status:503,headers:{"content-type":"application/json"}});
+
+        await env.EMAIL.send({
+          to: "jiquiliscobaytours@gmail.com",
+          from: "waivers@jiquiliscobay.com",
+          subject: `Signed waiver ${ref} — ${signer}`,
+          text: `${record}\n\nCustomer email: ${email || "Not provided"}`,
+          replyTo: email || undefined
+        });
+        return new Response(JSON.stringify({ok:true}), {headers:{"content-type":"application/json","cache-control":"no-store"}});
+      } catch (err) {
+        return new Response(JSON.stringify({ok:false,error:"Unable to deliver waiver"}), {status:500,headers:{"content-type":"application/json","cache-control":"no-store"}});
+      }
+    }
+
     if (url.pathname === "/robots.txt") {
       const file = host === "bahiajiquilisco.com" ? "/robots-es.txt" : "/robots.txt";
       const u = new URL(request.url); u.pathname = file;
