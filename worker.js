@@ -41,7 +41,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
           ? `Eres el asistente virtual de Jiquilisco Bay Tours. Responde en español, breve, cálido y práctico. Usa SOLO los datos proporcionados. No inventes horarios, disponibilidad, políticas, precios ni servicios. Nunca confirmes disponibilidad. Para reservar, dirige al formulario de reserva de esta página (#booking); para ayuda humana ofrece WhatsApp. Si no sabes algo, dilo y ofrece WhatsApp. Datos:\n${facts}`
           : `You are the virtual assistant for Jiquilisco Bay Tours. Answer in English, briefly, warmly and practically. Use ONLY the supplied facts. Do not invent schedules, availability, policies, prices or services. Never confirm availability. For booking, direct guests to the booking form on this page (#booking); for human help offer WhatsApp. If you do not know, say so and offer WhatsApp. Facts:\n${facts}`;
         const out = await env.AI.run("@cf/google/gemma-4-26b-a4b-it", {messages:[{role:"system",content:system},{role:"user",content:message}],chat_template_kwargs:{enable_thinking:false}});
-        const answer = String(out?.response || out?.result?.response || "").trim();
+        const answer = String(out?.choices?.[0]?.message?.content || out?.response || out?.result?.response || "").trim();
         return Response.json({answer: answer || (lang === "es" ? "No tengo esa información. Escríbenos por WhatsApp y te ayudamos." : "I don't have that information. Please message us on WhatsApp and we can help.")}, {headers:{"cache-control":"no-store"}});
       } catch (err) {
         return Response.json({answer:"Please message us on WhatsApp for help."}, {status:500,headers:{"cache-control":"no-store"}});
