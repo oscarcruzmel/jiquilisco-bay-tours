@@ -19,7 +19,36 @@ export default {
       }
     }
 
-    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
+    if (url.pathname === "/api/chat" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const message = String(body.message || "").trim().slice(0, 500);
+        const lang = body.lang === "es" ? "es" : "en";
+        if (!message) return Response.json({answer: lang === "es" ? "Escribe una pregunta para ayudarte." : "Please enter a question."}, {status:400});
+        if (!env.AI) return Response.json({answer: lang === "es" ? "El asistente no está disponible en este momento. Escríbenos por WhatsApp." : "The assistant is unavailable right now. Please message us on WhatsApp."}, {status:503});
+        const facts = `Jiquilisco Bay Tours operates in Jiquilisco Bay, Usulután, El Salvador.
+Boat tours: 3-hour Bay Explorer $150 per private boat; 5-hour Mangrove & Beach Tour $225; Full-Day Adventure 7–8 hours $350; Sunset Boat Tour 2 hours $150. Boat groups may be up to 12 guests.
+Deposits after availability confirmation: $50 for 3-hour and sunset; $75 for 5-hour; full-day/add-on-only deposit is confirmed with booking. Never tell a guest a date is available; availability must be confirmed by the human team before payment.
+ATV at Punta San Juan del Gozo: $35/ATV 1 hour, $60/ATV 2 hours, $100/ATV 4 hours; up to 2 riders per ATV; inventory/availability must be confirmed.
+Horseback riding per rider: 30 min $35, 1 hour $50, sunset 75–90 min $65; availability confirmed in advance.
+Meals: breakfast $8/person, lunch $12/person, dinner $15/person, subject to local availability; one nonalcoholic beverage included.
+Boat has complimentary Starlink Wi-Fi.
+Booking: guests can use the booking form on this website. It prepares a WhatsApp request. Payment is only after availability and deposit amount are confirmed. Stripe is for already-confirmed deposits. Zelle is also displayed on the booking page.
+Cancellation: deposits are nonrefundable for guest cancellations within 48 hours. If unsafe weather or operator cancellation requires cancellation, guests may reschedule or receive a full refund.
+WhatsApp human help: +1 703-986-7804.
+The area is remote/rural; facilities, roads, docks, bathrooms, communications and medical services can be basic or limited.`;
+        const system = lang === "es"
+          ? `Eres el asistente virtual de Jiquilisco Bay Tours. Responde en español, breve, cálido y práctico. Usa SOLO los datos proporcionados. No inventes horarios, disponibilidad, políticas, precios ni servicios. Nunca confirmes disponibilidad. Para reservar, indica al huésped que toque el botón "Reservar un tour" debajo; nunca muestres anclas técnicas como #booking. Para ayuda humana ofrece WhatsApp. Usa solo texto simple: no uses símbolos Markdown como **, *, # ni comillas invertidas. Si no sabes algo, dilo y ofrece WhatsApp. Datos:\n${facts}`
+          : `You are the virtual assistant for Jiquilisco Bay Tours. Answer in English, briefly, warmly and practically. Use ONLY the supplied facts. Do not invent schedules, availability, policies, prices or services. Never confirm availability. For booking, tell guests to tap the "Book a tour" button below; never show technical anchors such as #booking. For human help offer WhatsApp. Use plain text only: no Markdown symbols such as **, *, #, or backticks. If you do not know, say so and offer WhatsApp. Facts:\n${facts}`;
+        const out = await env.AI.run("@cf/google/gemma-4-26b-a4b-it", {messages:[{role:"system",content:system},{role:"user",content:message}],chat_template_kwargs:{enable_thinking:false}});
+        const answer = String(out?.choices?.[0]?.message?.content || out?.response || out?.result?.response || "").trim();
+        return Response.json({answer: answer || (lang === "es" ? "No tengo esa información. Escríbenos por WhatsApp y te ayudamos." : "I don't have that information. Please message us on WhatsApp and we can help.")}, {headers:{"cache-control":"no-store"}});
+      } catch (err) {
+        return Response.json({answer:"Please message us on WhatsApp for help."}, {status:500,headers:{"cache-control":"no-store"}});
+      }
+    }
+
+    // Keep the Spanish public URL canonical at the domain root. Avoid an Assets HTML-handling redirect loop on /es.\n    if (host === "bahiajiquilisco.com" && (url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html")) {\n      return Response.redirect("https://bahiajiquilisco.com/", 301);\n    }\n\n    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
     if (["/tours","/about","/contact"].includes(url.pathname.replace(/\/$/, ""))) {
       const destination = host === "bahiajiquilisco.com" ? "https://bahiajiquilisco.com/" : "https://jiquiliscobay.com/";
       return Response.redirect(destination, 301);
@@ -39,7 +68,7 @@ export default {
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
-      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
+      if (url.pathname === "/" || url.pathname === "/index.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
       else if (url.pathname === "/blog.html" || url.pathname === "/blog-es.html") { spanish.pathname = "/blog-es.html"; assetRequest = new Request(spanish, request); }
     }
     const response = await env.ASSETS.fetch(assetRequest);
@@ -62,7 +91,7 @@ export default {
       .replaceAll('data-price="45">1 hora — $45/persona', 'data-price="50">1 hora — $50/persona')
       .replaceAll('data-price="60">Atardecer 75–90 min — $60/persona', 'data-price="65">Atardecer 75–90 min — $65/persona');
 
-    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html";
+    const isHome = url.pathname === "/" || url.pathname === "/index.html";
     if (isHome) {
       const es = host === "bahiajiquilisco.com";
       if (es) {
@@ -83,7 +112,8 @@ export default {
         : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
       const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":["TouristInformationCenter","TravelAgency"],"name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Guía de viaje, paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Travel information, boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
       html = html.replace("</head>", seo + schema + "</head>");
-      html = html.replace("</body>", '<script src="/waiver.js" defer></script></body>');
+      html = html.replace("</head>", '<link rel="stylesheet" href="/chatbot.css"></head>');
+      html = html.replace("</body>", '<script src="/waiver.js" defer></script><script src="/chatbot.js" defer></script></body>');
     }
     return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
   }
