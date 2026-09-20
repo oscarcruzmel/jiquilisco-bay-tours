@@ -48,7 +48,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       }
     }
 
-    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
+    // Keep the Spanish public URL canonical at the domain root. Avoid an Assets HTML-handling redirect loop on /es.\n    if (host === "bahiajiquilisco.com" && (url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html")) {\n      return Response.redirect("https://bahiajiquilisco.com/", 301);\n    }\n\n    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
     if (["/tours","/about","/contact"].includes(url.pathname.replace(/\/$/, ""))) {
       const destination = host === "bahiajiquilisco.com" ? "https://bahiajiquilisco.com/" : "https://jiquiliscobay.com/";
       return Response.redirect(destination, 301);
@@ -68,7 +68,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
-      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
+      if (url.pathname === "/" || url.pathname === "/index.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
       else if (url.pathname === "/blog.html" || url.pathname === "/blog-es.html") { spanish.pathname = "/blog-es.html"; assetRequest = new Request(spanish, request); }
     }
     const response = await env.ASSETS.fetch(assetRequest);
@@ -91,7 +91,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       .replaceAll('data-price="45">1 hora — $45/persona', 'data-price="50">1 hora — $50/persona')
       .replaceAll('data-price="60">Atardecer 75–90 min — $60/persona', 'data-price="65">Atardecer 75–90 min — $65/persona');
 
-    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html";
+    const isHome = url.pathname === "/" || url.pathname === "/index.html";
     if (isHome) {
       const es = host === "bahiajiquilisco.com";
       if (es) {
