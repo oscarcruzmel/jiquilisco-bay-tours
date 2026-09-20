@@ -68,7 +68,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
-      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
+      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
       else if (url.pathname === "/blog.html" || url.pathname === "/blog-es.html") { spanish.pathname = "/blog-es.html"; assetRequest = new Request(spanish, request); }
     }
     const response = await env.ASSETS.fetch(assetRequest);
@@ -91,7 +91,7 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       .replaceAll('data-price="45">1 hora — $45/persona', 'data-price="50">1 hora — $50/persona')
       .replaceAll('data-price="60">Atardecer 75–90 min — $60/persona', 'data-price="65">Atardecer 75–90 min — $65/persona');
 
-    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html";
+    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html";
     if (isHome) {
       const es = host === "bahiajiquilisco.com";
       if (es) {
