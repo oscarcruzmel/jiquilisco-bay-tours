@@ -39,7 +39,7 @@ export default {
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
-      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
+      if (url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
       else if (url.pathname === "/blog.html" || url.pathname === "/blog-es.html") { spanish.pathname = "/blog-es.html"; assetRequest = new Request(spanish, request); }
     }
     const response = await env.ASSETS.fetch(assetRequest);
@@ -62,7 +62,7 @@ export default {
       .replaceAll('data-price="45">1 hora — $45/persona', 'data-price="50">1 hora — $50/persona')
       .replaceAll('data-price="60">Atardecer 75–90 min — $60/persona', 'data-price="65">Atardecer 75–90 min — $65/persona');
 
-    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es.html";
+    const isHome = url.pathname === "/" || url.pathname === "/index.html" || url.pathname === "/es" || url.pathname === "/es/" || url.pathname === "/es.html";
     if (isHome) {
       const es = host === "bahiajiquilisco.com";
       if (es) {
@@ -79,9 +79,9 @@ export default {
       // Normalize canonicals to the non-www production domains.
       html = html.replace(/<link rel="canonical" href="[^"]*">/i, `<link rel="canonical" href="${es?'https://bahiajiquilisco.com/':'https://jiquiliscobay.com/'}">`);
       const seo = es
-        ? '<link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">'
-        : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
-      const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":["TouristInformationCenter","TravelAgency"],"name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Guía de viaje, paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Travel information, boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
+        ? '<link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/es"><link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">'
+        : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/es"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
+      const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":["TouristInformationCenter","TravelAgency"],"name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/es":"https://jiquiliscobay.com/","description":es?"Guía de viaje, paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Travel information, boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
       html = html.replace("</head>", seo + schema + "</head>");
       html = html.replace("</body>", '<script src="/waiver.js" defer></script></body>');
     }
