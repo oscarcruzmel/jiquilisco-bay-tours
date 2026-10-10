@@ -48,7 +48,17 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       }
     }
 
-    // Consolidate legacy Spanish URLs on the English domain into the Spanish domain.\n    if (host === "jiquiliscobay.com" && ["/es", "/es/", "/es.html"].includes(url.pathname)) {\n      return Response.redirect("https://bahiajiquilisco.com/", 301);\n    }\n\n    // Keep one clean Spanish homepage URL. Redirect legacy /es variants to the root domain.\n    if (host === "bahiajiquilisco.com" && ["/es", "/es/", "/es.html", "/index.html"].includes(url.pathname)) {\n      return Response.redirect("https://bahiajiquilisco.com/", 301);\n    }\n\n    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
+    // Consolidate legacy Spanish URLs on the English domain into the Spanish domain.
+    if (host === "jiquiliscobay.com" && ["/es", "/es/", "/es.html"].includes(url.pathname)) {
+      return Response.redirect("https://bahiajiquilisco.com/", 301);
+    }
+
+    // Keep one clean Spanish homepage URL.
+    if (host === "bahiajiquilisco.com" && ["/es", "/es/", "/es.html", "/index.html"].includes(url.pathname)) {
+      return Response.redirect("https://bahiajiquilisco.com/", 301);
+    }
+
+    // Retire URLs from the previous site so search engines consolidate their authority into the new homepage.
     if (["/tours","/about","/contact"].includes(url.pathname.replace(/\/$/, ""))) {
       const destination = host === "bahiajiquilisco.com" ? "https://bahiajiquilisco.com/" : "https://jiquiliscobay.com/";
       return Response.redirect(destination, 301);
