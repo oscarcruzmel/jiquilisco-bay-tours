@@ -80,6 +80,11 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       const spanish = new URL(request.url);
       if (url.pathname === "/") { spanish.pathname = "/es.html"; assetRequest = new Request(spanish, request); }
       else if (url.pathname === "/blog.html" || url.pathname === "/blog-es.html") { spanish.pathname = "/blog-es.html"; assetRequest = new Request(spanish, request); }
+    } else if (host === "jiquiliscobay.com" && url.pathname === "/") {
+      // With html_handling set to "none", map the English root explicitly to its homepage asset.
+      const english = new URL(request.url);
+      english.pathname = "/index.html";
+      assetRequest = new Request(english, request);
     }
     const response = await env.ASSETS.fetch(assetRequest);
     const contentType = response.headers.get("content-type") || "";
