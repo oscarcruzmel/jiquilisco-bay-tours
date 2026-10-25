@@ -75,6 +75,19 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       return env.ASSETS.fetch(new Request(u, request));
     }
 
+    // Keep the guide's public URL while serving its existing HTML asset.
+    if (["/bahia-de-jiquilisco.html", "/bahia-de-jiquilisco/"].includes(url.pathname)) {
+      const destination = new URL(request.url);
+      destination.pathname = "/bahia-de-jiquilisco";
+      return Response.redirect(destination.toString(), 301);
+    }
+    // Preserve the previously published day-trip URL.
+    if (["/blog/es/planear-dia-bahia-de-jiquilisco", "/blog/es/planear-dia-bahia-de-jiquilisco.html"].includes(url.pathname)) {
+      const destination = new URL(request.url);
+      destination.pathname = "/blog/es/planear-excursion-de-un-dia.html";
+      return Response.redirect(destination.toString(), 301);
+    }
+
     let assetRequest = request;
     if (host === "bahiajiquilisco.com") {
       const spanish = new URL(request.url);
@@ -86,7 +99,16 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       english.pathname = "/index.html";
       assetRequest = new Request(english, request);
     }
-    const response = await env.ASSETS.fetch(assetRequest);
+    // html_handling is intentionally "none"; resolve existing extensionless
+    // pages explicitly, leaving unknown URLs as real 404s and APIs untouched.
+    let response = await env.ASSETS.fetch(assetRequest);
+    if (response.status === 404 && ["GET", "HEAD"].includes(request.method)
+        && url.pathname !== "/" && !url.pathname.startsWith("/api/")
+        && !url.pathname.split("/").pop().includes(".")) {
+      const page = new URL(assetRequest.url);
+      page.pathname = page.pathname.replace(/\/$/, "") + ".html";
+      response = await env.ASSETS.fetch(new Request(page, request));
+    }
     const contentType = response.headers.get("content-type") || "";
     if (!contentType.includes("text/html")) return response;
     let html = await response.text();
@@ -122,9 +144,10 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       }
       // Normalize canonicals to the non-www production domains.
       html = html.replace(/<link rel="canonical" href="[^"]*">/i, `<link rel="canonical" href="${es?'https://bahiajiquilisco.com/':'https://jiquiliscobay.com/'}">`);
+      html = html.replace(/<link\b(?=[^>]*hreflang=)[^>]*>/gi, "");
       const seo = es
-        ? '<link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">'
-        : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
+        ? '<link rel="alternate" hreflang="es" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">'
+        : '<link rel="alternate" hreflang="en" href="https://jiquiliscobay.com/"><link rel="alternate" hreflang="es" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="es-SV" href="https://bahiajiquilisco.com/"><link rel="alternate" hreflang="x-default" href="https://jiquiliscobay.com/">';
       const schema = `<script type="application/ld+json">${JSON.stringify({"@context":"https://schema.org","@type":["TouristInformationCenter","TravelAgency"],"name":"Jiquilisco Bay Tours","url":es?"https://bahiajiquilisco.com/":"https://jiquiliscobay.com/","description":es?"Guía de viaje, paseos en lancha y experiencias en la Bahía de Jiquilisco, Usulután, El Salvador.":"Travel information, boat tours and coastal experiences in Jiquilisco Bay, Usulután, El Salvador.","areaServed":{"@type":"Place","name":"Bahía de Jiquilisco, Usulután, El Salvador"},"sameAs":["https://www.instagram.com/jiquiliscobaytours","https://www.facebook.com/profile.php?id=61590794607731","https://www.tiktok.com/@jiquiliscobaytours"]})}</script>`;
       html = html.replace("</head>", seo + schema + "</head>");
       html = html.replace("</head>", '<link rel="stylesheet" href="/chatbot.css"></head>');
