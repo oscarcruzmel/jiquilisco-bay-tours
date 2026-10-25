@@ -8,3 +8,7 @@
 .advance-booking-notice strong{display:block;font-size:1.1rem}
 .advance-booking-notice p{margin:8px 0 0;line-height:1.5}
 #booking-date-help{display:block;font-size:.8rem;font-weight:400;line-height:1.45;margin-top:6px}
+
+.hero-badges .wifi-highlight{background:#fff3c4;border:2px solid #d6ad41;color:#123d37;box-shadow:0 4px 20px #0002}
+.hero-badges .wifi-highlight b{color:#174e43;font-size:1.05rem;letter-spacing:.04em}
+.hero-badges .wifi-highlight span{color:#244b43;font-weight:600}
