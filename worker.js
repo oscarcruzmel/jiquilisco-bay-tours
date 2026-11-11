@@ -34,7 +34,7 @@ Horseback riding per rider: 30 min $35, 1 hour $50, sunset 75–90 min $65; avai
 Meals: breakfast $8/person, lunch $12/person, dinner $15/person, subject to local availability; one nonalcoholic beverage included.
 Boat has complimentary Starlink Wi-Fi.
 Booking: guests can use the booking form on this website. It prepares a WhatsApp request. Payment is only after availability and deposit amount are confirmed. Stripe is for already-confirmed deposits. Zelle is also displayed on the booking page.
-Cancellation: deposits are nonrefundable for guest cancellations within 48 hours. If unsafe weather or operator cancellation requires cancellation, guests may reschedule or receive a full refund.
+Cancellation and rescheduling: a 25% deposit is nonrefundable for customer cancellations. Customers may request one rescheduling at least 72 hours before the original departure, applying the deposit toward a tour within 90 days of the original tour date, subject to availability and team approval. Within 72 hours, direct customers to the team via WhatsApp; no self-service changes. If unsafe weather or operator cancellation requires cancellation, guests may reschedule or receive a full refund.
 WhatsApp human help: +1 703-986-7804.
 The area is remote/rural; facilities, roads, docks, bathrooms, communications and medical services can be basic or limited.`;
         const system = lang === "es"
