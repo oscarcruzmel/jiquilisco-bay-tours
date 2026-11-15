@@ -1,7 +1,13 @@
+import { handleReservationApi, runReservationReminders } from "./reservation-api.js";
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const host = url.hostname.toLowerCase().replace(/^www\./, "");
+
+    if (url.pathname.startsWith("/api/reservations") || url.pathname.startsWith("/api/admin/") || url.pathname.startsWith("/api/payments/")) {
+      return handleReservationApi(request, env);
+    }
 
     if (url.pathname === "/api/waiver" && request.method === "POST") {
       try {
@@ -28,13 +34,13 @@ export default {
         if (!env.AI) return Response.json({answer: lang === "es" ? "El asistente no está disponible en este momento. Escríbenos por WhatsApp." : "The assistant is unavailable right now. Please message us on WhatsApp."}, {status:503});
         const facts = `Jiquilisco Bay Tours operates in Jiquilisco Bay, Usulután, El Salvador.
 Boat tours: 3-hour Bay Explorer $150 per private boat; 5-hour Mangrove & Beach Tour $225; Full-Day Adventure 7–8 hours $350; Sunset Boat Tour 2 hours $150. Boat groups may be up to 12 guests.
-Deposits after availability confirmation: $50 for 3-hour and sunset; $75 for 5-hour; full-day/add-on-only deposit is confirmed with booking. Never tell a guest a date is available; availability must be confirmed by the human team before payment.
+After the team approves a booking, customers pay a nonrefundable 25% deposit through Stripe. The remaining 75% is due through Stripe at least 24 hours before departure. Staff do not collect cash. Never tell a guest a date is available; availability must be confirmed by the human team before payment.
 ATV at Punta San Juan del Gozo: $35/ATV 1 hour, $60/ATV 2 hours, $100/ATV 4 hours; up to 2 riders per ATV; inventory/availability must be confirmed.
 Horseback riding per rider: 30 min $35, 1 hour $50, sunset 75–90 min $65; availability confirmed in advance.
 Meals: breakfast $8/person, lunch $12/person, dinner $15/person, subject to local availability; one nonalcoholic beverage included.
 Boat has complimentary Starlink Wi-Fi.
-Booking: guests can use the booking form on this website. It prepares a WhatsApp request. Payment is only after availability and deposit amount are confirmed. Stripe is for already-confirmed deposits. Zelle is also displayed on the booking page.
-Cancellation and rescheduling: a 25% deposit is nonrefundable for customer cancellations. Customers may request one rescheduling at least 72 hours before the original departure, applying the deposit toward a tour within 90 days of the original tour date, subject to availability and team approval. Within 72 hours, direct customers to the team via WhatsApp; no self-service changes. If unsafe weather or operator cancellation requires cancellation, guests may reschedule or receive a full refund.
+Booking: guests can submit the reservation form on this website. The team reviews availability and approves, declines or suggests a new date. Customers receive a secure reservation portal. The minimum advance notice is 72 hours. Payment is by Stripe only after approval; never request cash or Zelle.
+Cancellation and rescheduling: the 25% deposit is nonrefundable when the customer cancels. Customers may request one rescheduling at least 72 hours before the original departure, applying the deposit toward a tour within 90 days of the original tour date, subject to availability and team approval. Within 72 hours, direct customers to the team via WhatsApp; no self-service changes. If unsafe weather or operator cancellation requires cancellation, guests may reschedule or receive a full refund.
 WhatsApp human help: +1 703-986-7804.
 The area is remote/rural; facilities, roads, docks, bathrooms, communications and medical services can be basic or limited.`;
         const system = lang === "es"
@@ -154,5 +160,8 @@ The area is remote/rural; facilities, roads, docks, bathrooms, communications an
       html = html.replace("</body>", '<script src="/waiver.js" defer></script><script src="/chatbot.js" defer></script></body>');
     }
     return new Response(html,{status:response.status,statusText:response.statusText,headers:response.headers});
+  },
+  async scheduled(_event, env, ctx) {
+    ctx.waitUntil(runReservationReminders(env));
   }
 };

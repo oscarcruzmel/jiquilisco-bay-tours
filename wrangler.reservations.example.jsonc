@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "jiquilisco-bay-tours",
+  "main": "worker.js",
+  "compatibility_date": "2026-09-06",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true,
+    "html_handling": "none"
+  },
+  "ai": { "binding": "AI" },
+  "d1_databases": [
+    {
+      "binding": "RESERVATIONS_DB",
+      "database_name": "jiquilisco-reservations",
+      "database_id": "REPLACE_WITH_CREATED_D1_DATABASE_ID",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": { "crons": ["0 * * * *"] }
+}
