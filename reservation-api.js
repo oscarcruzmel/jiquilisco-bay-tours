@@ -118,13 +118,16 @@ export async function handleReservationApi(request, env) {
       const x = await body(request); const lang = x.language === "es" ? "es" : "en";
       const name=bounded(x.name,160), email=bounded(x.email,200), phone=bounded(x.phone,32), date=bounded(x.date,10), time=bounded(x.start_time,20) || "unsure";
       if (!name || !/^\S+@\S+\.\S+$/.test(email) || !/^\+?[0-9 ()-]{8,30}$/.test(phone) || !dateValid(date) || !x.tour_name) return json({ok:false,error:"Check your name, email, phone, date and tour selections."},400,headers);
+      if(time!=="unsure"&&time!=="sunset"&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return json({ok:false,error:"Choose a valid start time."},400,headers);
+      const addons=x.addons||{}, atvQty=Number(addons.atv_qty)||0, riders=Number(addons.horse_riders)||0;
+      if(atvQty<0||atvQty>2||riders<0||riders>12||(addons.horse_code&&riders<1)) return json({ok:false,error:"Check the activity quantities and rider counts."},400,headers);
       const adults=Math.max(1,Math.min(30,Number(x.adults)||1)), children=Math.max(0,Math.min(30,Number(x.children)||0));
       if (departureEpoch(date,time) < now()+72*3600) return json({ok:false,error:lang==="es"?"Las reservas requieren al menos 72 horas de anticipación.":"Bookings must be made at least 72 hours in advance."},400,headers);
       const startTime = /^\d\d:\d\d$/.test(time) || time==="sunset" ? time : "unsure";
       const total=await computePrice(db,{...x,addons:x.addons||{}}); if (total <= 0) return json({ok:false,error:"Select a priced tour or add-on."},400,headers);
       const reservationId=id(), token=randomToken(), stamp=now();
       await db.prepare(`INSERT INTO reservations (id,customer_token_hash,customer_name,customer_email,customer_phone,whatsapp_opt_in,language,tour_date,start_time,party_json,tour_name,addons_json,notes,total_cents,status,original_tour_date,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'requested',?,?,?)`)
-        .bind(reservationId,await digest(token),name,email,phone,x.whatsapp_opt_in?1:0,lang,date,startTime,JSON.stringify({adults,children}),bounded(x.tour_name,160),JSON.stringify(x.addons||{}),bounded(x.notes,1500),total,date,stamp,stamp).run();
+        .bind(reservationId,await digest(token),name,email,phone,x.whatsapp_opt_in===true?1:0,lang,date,startTime,JSON.stringify({adults,children}),bounded(x.tour_name,160),JSON.stringify(addons),bounded(x.notes,1500),total,date,stamp,stamp).run();
       await audit(db,reservationId,null,"request_created",{language:lang});
       const r=await loadReservation(db,reservationId); await notify(env,r,"booking_request","",token);
       return json({ok:true,id:reservationId,portal_url:`${url.origin}/portal.html?token=${token}`,status:"requested",message:lang==="es"?"Solicitud recibida. Te enviaremos una respuesta cuando el equipo revise la disponibilidad.":"Request received. We’ll send an update after the team checks availability."},201,headers);
