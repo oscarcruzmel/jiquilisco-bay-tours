@@ -248,8 +248,8 @@ export async function handleReservationApi(request, env) {
       if(!env.STRIPE_SECRET_KEY) return json({ok:false,error:"Stripe is not configured yet."},503,headers);
       const r=await loadReservation(db,refundMatch[1]); if(!r) return json({ok:false,error:"Reservation not found."},404,headers);
       const x=await body(request), paymentKind=x.kind==="balance"?"balance":"deposit", sessionId=paymentKind==="balance"?r.stripe_balance_session:r.stripe_deposit_session;
-      const refundPolicy=(await settings(db)).policies||{};const customerRefundAllowed=r.status==="cancelled"&&refundPolicy.customer_deposit_refundable===true&&x?.kind==="deposit";
-      if(r.status!=="operator_cancelled"&&r.status!=="refund_pending"&&!customerRefundAllowed) return json({ok:false,error:"Refunds are available for operator cancellations, or for eligible customer cancellations set by the owner."},409,headers);
+      const refundPolicy=(await settings(db)).policies||{};const customerDepositRefund=r.status==="cancelled"&&refundPolicy.customer_deposit_refundable===true&&paymentKind==="deposit";const customerBalanceRefund=r.status==="cancelled"&&paymentKind==="balance";
+      if(r.status!=="operator_cancelled"&&r.status!=="refund_pending"&&!customerDepositRefund&&!customerBalanceRefund) return json({ok:false,error:"Customer cancellation deposits are nonrefundable under the current policy."},409,headers);
       if(!sessionId) return json({ok:false,error:"No paid Stripe checkout session exists for this payment."},409,headers);
       const sessionRes=await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}?expand[]=payment_intent`,{headers:{authorization:`Bearer ${env.STRIPE_SECRET_KEY}`}}); if(!sessionRes.ok) return json({ok:false,error:"Unable to retrieve the Stripe payment."},502,headers);
       const session=await sessionRes.json(), paymentIntent=typeof session.payment_intent==="string"?session.payment_intent:session.payment_intent?.id;
