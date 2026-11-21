@@ -12,3 +12,7 @@
 .hero-badges .wifi-highlight{background:#fff3c4;border:2px solid #d6ad41;color:#123d37;box-shadow:0 4px 20px #0002}
 .hero-badges .wifi-highlight b{color:#174e43;font-size:1.05rem;letter-spacing:.04em}
 .hero-badges .wifi-highlight span{color:#244b43;font-weight:600}
+
+.booking-calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: .25rem; }
+.booking-calendar-days button { padding: .45rem .15rem; }
+.booking-calendar-days button:disabled { opacity: .45; }

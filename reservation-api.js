@@ -123,6 +123,9 @@ export async function handleReservationApi(request, env) {
       if(atvQty<0||atvQty>2||riders<0||riders>12||(addons.horse_code&&riders<1)) return json({ok:false,error:"Check the activity quantities and rider counts."},400,headers);
       const adults=Math.max(1,Math.min(30,Number(x.adults)||1)), children=Math.max(0,Math.min(30,Number(x.children)||0));
       if (departureEpoch(date,time) < now()+72*3600) return json({ok:false,error:lang==="es"?"Las reservas requieren al menos 72 horas de anticipación.":"Bookings must be made at least 72 hours in advance."},400,headers);
+      if (await db.prepare("SELECT 1 FROM reserved_dates WHERE tour_date=?").bind(date).first()) {
+        return json({ok:false,error:lang==="es"?"Esta fecha ya está reservada. Elige otra fecha.":"This date is already reserved. Choose another date."},409,headers);
+      }
       const startTime = /^\d\d:\d\d$/.test(time) || time==="sunset" ? time : "unsure";
       const total=await computePrice(db,{...x,addons:x.addons||{}}); if (total <= 0) return json({ok:false,error:"Select a priced tour or add-on."},400,headers);
       const reservationId=id(), token=randomToken(), stamp=now();
