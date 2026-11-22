@@ -8,7 +8,8 @@ const randomToken = () => bytesToHex(crypto.getRandomValues(new Uint8Array(32)))
 async function digest(value) { return bytesToHex(await crypto.subtle.digest("SHA-256", enc.encode(value))); }
 async function passwordHash(password, salt) {
   const key = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]);
-  return bytesToHex(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode(salt), iterations: 210000, hash: "SHA-256" }, key, 256));
+  // Cloudflare Workers caps Web Crypto PBKDF2 at 100,000 iterations.
+  return bytesToHex(await crypto.subtle.deriveBits({ name: "PBKDF2", salt: enc.encode(salt), iterations: 100000, hash: "SHA-256" }, key, 256));
 }
 const safeEqual = (a, b) => { if (!a || a.length !== b.length) return false; let n = 0; for (let i=0;i<a.length;i++) n |= a.charCodeAt(i) ^ b.charCodeAt(i); return n === 0; };
 const cookie = (name, value, maxAge) => `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
